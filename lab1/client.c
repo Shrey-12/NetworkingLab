@@ -7,9 +7,22 @@
 #include <sys/types.h>
 
 #define MAXLINE 200
+int read_integer(int sockfd) {
+  int n;
+  int value;
+
+  n = read(sockfd, &value, sizeof(value));
+  if (n < 0) {
+    perror("read");
+    return -1;
+  }
+ value = ntohl(value);
+
+  return value;
+}
 int main(int argc, char **argv)
 {
-
+	int flag=0;
 	int sockfd, n;
 	struct sockaddr_in servaddr;
 	if(argc !=3){
@@ -35,14 +48,17 @@ int main(int argc, char **argv)
 	}
 
 	if (connect(sockfd, (struct sockaddr *) &servaddr,sizeof(servaddr)) < 0){
+		printf("[-] Line busy\n");
 		printf("connection errorr");
 		return 1;
 	}
 	char data[MAXLINE];
 
-			read(sockfd,data,sizeof(data));
-		printf("%s",data);
-
+	flag=read_integer(sockfd);
+	printf("%d",flag);
+	if(flag==16777216){
+	read(sockfd,data,sizeof(data));
+        printf("%s",data);
 	while(1){
 		bzero(data, sizeof(data));
 		printf("Enter the string : ");
@@ -52,6 +68,7 @@ int main(int argc, char **argv)
 		bzero(data,sizeof(data));
 		read(sockfd,data,sizeof(data));
 		printf("%s",data);
+	}
 	}
 	exit(0);
 

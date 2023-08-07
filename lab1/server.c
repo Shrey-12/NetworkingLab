@@ -9,7 +9,7 @@
 int main(){
 
   char *ip = "127.0.0.1";
-  int port = 8080;
+  int port = 8081;
   FILE* fp;
   int server_sock, client_sock;
   struct sockaddr_in server_addr, client_addr;
@@ -35,19 +35,26 @@ int main(){
   }
   printf("[+]Bind to the port number: %d\n", port);
 
-  listen(server_sock, 2);
+  listen(server_sock, 5);
   printf("Listening...\n");
 
     addr_size = sizeof(client_addr);
-    client_sock = accept(server_sock, (struct sockaddr*)&client_addr, &addr_size);
-    if(client_sock<0){
-        printf("Accept error\n");
-        printf("[-] line busy");
-        exit(0);
-    }
-    printf("[+]Client connected.\n");
-    write(client_sock,"[+]You have been connected\n",28);
+    int flag=0;
     while(1){
+        pid_t pid=fork();
+         client_sock = accept(server_sock, (struct sockaddr*)&client_addr, &addr_size);
+         if(client_sock<0){
+                printf("[-] line busy\n");
+                printf("Accept error\n");
+                exit(0);
+        }
+
+        if(pid>0){
+        flag=1;
+        int *tmp = &flag;
+        write(client_sock, tmp, sizeof(int));
+        printf("[+]Client connected.\n");
+        write(client_sock,"[+]You have been connected\n",28);
         char man[10]="man -f ";
         char buffer[SIZE];
         read(client_sock, buffer, sizeof(buffer));
@@ -63,10 +70,15 @@ int main(){
         }
         write(client_sock,buffer,sizeof(buffer));
         bzero(buffer, sizeof(buffer));
-    }
-
+        }
+        else{
+        int tmp = htonl((uint32_t)flag);
+        write(client_sock, &tmp, sizeof(tmp));
+        write(client_sock,"[-] line busy\n",13);
+        break;
+        }
     close(client_sock);
     printf("[+]Client disconnected.\n\n");
-
+}
   return 0;
 }
