@@ -6,7 +6,7 @@
 #include <unistd.h>	   //write
 #include <sys/types.h>
 
-#define MAXLINE 200
+#define MAXLINE 5000
 int read_integer(int sockfd)
 {
 	int n;
@@ -26,7 +26,16 @@ int main(int argc, char **argv)
 {
 	int flag = 0;
 	int sockfd, n;
+	FILE* fptr;
 	struct sockaddr_in servaddr;
+	fptr = fopen("./alice.txt", "r");
+  
+    if (fptr == NULL) {
+        printf("[-] File couldnot be opened!\n");
+    }else{
+		printf("[+] File opened!\n");
+	}
+  
 	if (argc != 3)
 	{
 		printf("no port number supplied");
@@ -63,24 +72,22 @@ int main(int argc, char **argv)
 	printf("%d\n", flag);
 	if (flag == 0)
 	{
+		//you have been connected message
 		read(sockfd, data, sizeof(data));
 		printf("%s", data);
-		while (1)
+		bzero(data, sizeof(data));
+		while (fgets(data, 5000, fptr) != NULL)
 		{
-			bzero(data, sizeof(data));
-			printf("Enter the string : ");
-			int n = 0;
-			while ((data[n++] = getchar()) != '\n')
-				;
-			if(data[0] == '$'){
-				write(sockfd, data, sizeof(data));
-				close(sockfd);
-				exit(0);
-			}
+			//read from file into data ,5000 bytes
 			write(sockfd, data, sizeof(data));
 			bzero(data, sizeof(data));
-			read(sockfd, data, sizeof(data));
-			printf("%s", data);
+			//reading ack
+			if(read(sockfd, data, sizeof(data)) && strcmp(data,"ACK")<0){
+				printf("[-] Error received, exiting :\()");
+				return 0;
+			}else{
+			printf("%s\n", data);
+			}
 		}
 	}
 	else

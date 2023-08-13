@@ -4,15 +4,21 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/mman.h>
+#include <fcntl.h>
 
-#define SIZE 200
+#define SIZE 5000
 
 int main(int argc,char** argv)
 {
 
   char *ip = "127.0.0.1";
   int port = atoi(argv[1]);
-  FILE *fp;
+  int fout;
+
+  fout = open("output.txt", O_CREAT | O_WRONLY, 0666);
+  
+  // checking if the file is opened successfully
+ 
   int server_sock, client_sock;
   struct sockaddr_in server_addr, client_addr;
   socklen_t addr_size;
@@ -66,21 +72,16 @@ int main(int argc,char** argv)
     *flag = *flag + 1;
     write(client_sock, "[+]You have been connected\n", 28);
     while(1){
-      char man[10] = "man -f ";
       char buffer[SIZE];
+      //reading 5000 bytes
       read(client_sock, buffer, sizeof(buffer));
-      strcat(man, buffer);
+      int stdou = dup(1);
+      dup2(fout, 1);
+      printf("%s",buffer);
+      dup2(stdou, 1);
       bzero(buffer, sizeof(buffer));
-      fp = popen(man, "r");
-      if (fp == NULL)
-      {
-        printf("[-]Unable to open process");
-        return 1;
-      }
-      else
-      {
-        fgets(buffer, sizeof(buffer), fp);
-      }
+    //write ack
+      strcpy(buffer,"ACK");
       write(client_sock, buffer, sizeof(buffer));
       bzero(buffer, sizeof(buffer));
     }
